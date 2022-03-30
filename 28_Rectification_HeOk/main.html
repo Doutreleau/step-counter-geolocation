@@ -27,6 +27,7 @@
     <p id="result"></p>
 </div>
     
+<div id="delete"></div>
 <div class="circle">
     <div id="steps" >Number of steps :</div>
 </div>
@@ -178,11 +179,15 @@
         durationMin = durationMs/60000;
         distMiles = dist * 0.00062137;
         userInverseSpeed = durationMin/distMiles;
-        console.log("userInverseSpeed : " + userInverseSpeed)
+        console.log("userInverseSpeed : ", userInverseSpeed)
+        
         //then, we will get the index of the user's height in the chart in https://www.thecalculatorsite.com/articles/units/how-many-steps-in-a-mile.php
         const userHeight= document.getElementById("height").value;
         userHeightIndex = getHeightColumn(userHeight); //so now we know which line of stepsChart we will be using to calculate the steps
         console.log("userHeightIndex : ",userHeightIndex);
+        
+        document.getElementById("delete").innerHTML="userInverseSpeed : " + userInverseSpeed;
+        document.getElementById("delete").innerHTML+="userHeightIndex : "+userHeightIndex;
         const numSteps = getNumberSteps(userHeightIndex,userInverseSpeed,dist);
         return numSteps;
     }
@@ -221,10 +226,15 @@
     function getNumberSteps(heightIndex,speed,dist){
         speedIndex = getSpeedIndex(heightIndex,speed);
         console.log("speedIndex : ",speedIndex);
+        
         const coefSup = (speed-inverseSpeed[speedIndex])/2;
         console.log("coefSup : ",coefSup);
         const numStepsForOneMile = coefSup * stepsChart[heightIndex][speedIndex-1] + (1-coefSup) * stepsChart[heightIndex][speedIndex];
         console.log("numStepsForOneMile : ",numStepsForOneMile);
+        
+        document.getElementById("delete").innerHTML+="speedIndex : "+speedIndex;
+        document.getElementById("delete").innerHTML+="coefSup : "+coefSup;
+        document.getElementById("delete").innerHTML+="numStepsForOneMile : "+numStepsForOneMile;
         const numSteps = numStepsForOneMile * dist;
         return Math.round(numSteps);
     }
@@ -267,6 +277,8 @@
             }
             console.log(latitudes[i]);
             console.log(longitudes[i]);
+            document.getElementById("delete").innerHTML+=latitudes[i];
+            document.getElementById("delete").innerHTML+=longitudes[i];
             var marker = L.marker([latitudes[i],longitudes[i]]);
             markersArray[markersArray.length]=marker;
             coordinatesMarkers[coordinatesMarkers.length] = [latitudes[i],longitudes[i]]; 

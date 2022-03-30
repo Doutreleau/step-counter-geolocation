@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="css/styles.css" rel="stylesheet">
+     <link rel = "stylesheet" href = "http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css"/>
+    <title> Step Counter</title>
+</head>
+<body>
+
+<div id="rectangleTitle">
+    <h2>Step Counter</h2>
+</div>
+
+<form id="form">
+  <label for="height">Height in cm:</label><br>
+  <input type="number" id="height" name="height" required><br>
+
+</form> 
+
+<div id="buttons">
+    <button class="button" onclick="timerGetLocation()">Start</button>
+    <button class="button" onclick="stopGetLocation()">Stop</button>
+    <button class="button" onclick="getMap()">Get Map</button>
+</div>
+    
+<div id="rectangleResult">
+    <p id="result"></p>
+</div>
+    
+<div class="circle">
+    <div id="steps" >Number of steps :</div>
+</div>
+    
+<div id="rectangleTime">
+    <div id="time"> </div>
+</div>
+<div id="map"></div>
+
+
+<noscript>You need to enable JavaScript to view the full site.</noscript>
+<script src = "http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+<script>
+    
+    //the latitudes and longitudes for each point will be stored
+    const latitudes = [50.6109262, 50.6109262,    50.6109262,    50.6109262,  50.6109262,    50.610916,   50.610916,   50.610916,   50.610916,   50.610916,   50.610916,   50.61096,  50.61096,  50.61096,  50.61096,  50.61096,  50.61096,  50.61096,  50.61096,  50.61096,  50.61096,  50.61096,  50.6110081,    50.6110081,    50.6110081];
+    const longitudes = [3.1339518, 3.1339518,   3.1339518  , 3.1339518,   3.1339518,    3.1339406,    3.1339406,    3.1339406,    3.1339406,    3.1339406,    3.1339406,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.134181,    3.134181,    3.134181];
+
+    //we hide the elements we don't want to see for the moment
+    document.getElementById("rectangleResult").style.display="none";
+    document.getElementById("map").style.display="none";
+    document.getElementById("rectangleTime").style.display="none";
+
+    // the next arrays will be used to convert the distance covered into the number of steps, according to the chart in https://www.thecalculatorsite.com/articles/units/how-many-steps-in-a-mile.php
+    const heights = [152.4, 154.94, 157.48, 160.02, 162.56, 165.1, 167.64, 170.18, 172.72, 175.26, 177.8, 180.34, 182.88, 185.42, 187.96, 190.5, 193.04]; //contains the heights in cm
+    const inverseSpeed= [20, 18, 16, 14, 12, 10, 8, 6]; //contains the "inverse of speed" in the chart in mins/mile
+    const stepsChart = [[1.4732747585966919, 1.3943604210421665, 1.315446083487641, 1.2371531186697653,1.2408813550896642, 1.0625473796711695, 0.884213404252675, 0.7058794288341805],
+                        [1.4645755402835945, 1.3856612027290691, 1.3067468651745437, 1.228453900356668,1.2328035095132166, 1.054469534094722, 0.8755141859395777, 0.6971802105210833],
+                        [1.4558763219704973, 1.3769619844159717, 1.2980476468614464, 1.219133309306921,1.2241042912001194, 1.0457703157816247, 0.8674363403631302, 0.6891023649446357], 
+                        [1.4471771036574, 1.3682627661028746, 1.289348428548349, 1.2104340909938236, 1.2160264456236718, 1.0376924702051773, 0.8587371220500329, 0.6804031466315384], 
+                        [1.417972585034859, 1.3390582474803336, 1.2601439099258083, 1.1812295723712827, 1.2073272273105746, 1.0289932518920801, 0.8506592764735855, 0.6723253010550909],
+                        [1.4092733667217618, 1.3303590291672363, 1.2514446916127107, 1.1725303540581855, 1.199249381734127, 1.0209154063156325, 0.8419600581604882, 0.6636260827419936], 
+                        [1.3999527756720147, 1.321659810854139, 1.2427454732996135, 1.1638311357450881, 1.1905501634210298, 1.0122161880025353, 0.8338822125840407, 0.6555482371655461], 
+                        [1.3912535573589173, 1.3129605925410417, 1.2340462549865163, 1.1551319174319907, 1.1824723178445824, 1.0041383424260877, 0.8251829942709434, 0.6468490188524488], 
+                        [1.3825543390458201, 1.3036400014912946, 1.225347036673419, 1.1464326991188936, 1.173773099531485, 0.9954391241129905, 0.8171051486944959, 0.6387711732760014], 
+                        [1.3738551207327228, 1.2949407831781974, 1.2166478183603218, 1.1377334808057962, 1.1656952539550376, 0.987361278536543, 0.8084059303813986, 0.6300719549629041], 
+                        [1.3651559024196256, 1.2862415648651, 1.2073272273105746, 1.129034262492699, 1.1569960356419402, 0.9786620602234457, 0.8003280848049511, 0.6219941093864565], 
+                        [1.3564566841065282, 1.2775423465520028, 1.1986280089974772, 1.1203350441796016, 1.1489181900654928, 0.9705842146469982, 0.7916288664918538, 0.6132948910733593], 
+                        [1.3477574657934308, 1.2688431282389052, 1.18992879068438, 1.1110144531298545, 1.1402189717523954, 0.9618849963339009, 0.7835510209154064, 0.6052170454969118], 
+                        [1.3390582474803336, 1.2601439099258083, 1.1812295723712827, 1.1023152348167573, 1.132141126175948, 0.9538071507574534, 0.774851802602309, 0.5965178271838145], 
+                        [1.3303590291672363, 1.2514446916127107, 1.1725303540581855, 1.09361601650366, 1.1234419078628506, 0.9451079324443561, 0.7667739570258616, 0.588439981607367], 
+                        [1.321659810854139, 1.2427454732996135, 1.1638311357450881, 1.0849167981905627, 1.1153640622864032, 0.9370300868679087, 0.7580747387127643, 0.5797407632942697], 
+                        [1.312339219804392, 1.2340462549865163, 1.1551319174319907, 1.0762175798774654, 1.1066648439733058, 0.9283308685548113, 0.7499968931363168, 0.5716629177178223]]; // contains the number of steps per meter depending on the height and the number of minutes one takes to cover a mile
+
+    //we define constants to store HTML elements
+    const result = document.getElementById("result"); //will display the information to the user
+    const stepsDisplay = document.getElementById("steps"); // is the big circle with the number of steps
+    const timeDisplay = document.getElementById("time"); // this is the chrono
+    
+    const interval = 2000; //the coordinates will be taken every 2 seconds
+    locationTimer=null; //will contain the timer which will fetch the coordinates every 2 seconds
+    let beginning = new Date(); //stores the starting date of the session, useful when calculating the total duration of the session
+
+    //manages the timer which will measure the position at every interval
+    function timerGetLocation(){
+        locationTimer = setInterval(getLocation,interval); 
+    }
+
+    //function called on clicking "Start"
+    function getLocation() { 
+        const checkHeight= document.getElementById("height").value;
+        if (!checkHeight){ //check the user entered their height
+        result.innerHTML = "Please enter your height.";
+        }
+        else{ //check if geolocation is supported
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition);
+          } else { 
+            result.innerHTML = "Geolocation is not supported by this browser.";
+          }
+        }
+    }
+
+    //getting the position and showing the steps and timer
+    function showPosition(position) {
+        document.getElementById("rectangleTime").style.display="block";
+        latitudes[latitudes.length] = position.coords.latitude;
+        longitudes[longitudes.length] = position.coords.longitude;
+
+         //now we'll display the number of steps and the timer
+        dist=Math.round(totalDistance());
+        let end = new Date();
+        let durationInMilliseconds = end - beginning;
+        let durationHours = Math.floor(durationInMilliseconds/3600000)
+        let durationMin = Math.floor((durationInMilliseconds-durationHours*3600000)/60000);
+        let durationSec = Math.floor((durationInMilliseconds-durationMin*60000-durationHours*3600000)/1000);
+        numSteps = conversionInSteps(dist,durationInMilliseconds);
+        stepsDisplay.innerHTML = "Number of steps: " + numSteps;
+        timeDisplay.innerHTML =  durationHours +" h " + durationMin + " min " + durationSec + "sec.";
+    }
+
+    //function called on clicking "Stop"
+    function stopGetLocation(){ 
+        clearInterval(locationTimer);    
+        let end = new Date(); //stores the date of the end of the session, useful when calculating the total duration of the session
+        let durationInMilliseconds = end - beginning;
+        let durationHours = Math.floor(durationInMilliseconds/3600000)
+        let durationMin = Math.floor((durationInMilliseconds-durationHours*3600000)/60000);
+        let durationSec = Math.floor((durationInMilliseconds-durationMin*60000-durationHours*3600000)/1000);
+
+        dist=Math.round(totalDistance()); //dist is in metres
+        distKm=Math.floor(dist/1000);
+        distM=dist-(distKm*1000);
+        avrSpeed=dist/(durationInMilliseconds/3600000);
+        
+        console.log("Dist : "+distM);
+        console.log("Sec : "+durationSec);
+        
+
+        numSteps = conversionInSteps(dist,durationInMilliseconds);
+
+        //displays the final result
+        result.innerHTML = "Well done ! You ran "+numSteps+" steps ! <br> You've completed "+distKm+ " "+ distM + " metres in "+ durationHours +" h " + durationMin + " min " + durationSec + "sec.";
+        stepsDisplay.innerHTML = "Number of steps: " + numSteps; 
+        document.getElementById("rectangleResult").style.display="block";
+
+    }
+
+    //gets the total distance between all the recorded coordinates
+    function totalDistance(){ 
+        let len = latitudes.length;
+        let dist = 0;
+        for (let i=0 ; i<(len-1);i++){
+            dist = dist + converseDistanceInKilometers(latitudes[i],longitudes[i],latitudes[i+1],longitudes[i+1]);
+        }
+        return dist;
+    }
+
+    //gets coordinates and returns the distance in metres
+    function converseDistanceInKilometers(lat1,lon1,lat2,lon2){ 
+        const R = 6371e3; // metres
+        const φ1 = lat1 * Math.PI/180; // φ, λ in radians
+        const φ2 = lat2 * Math.PI/180;
+        const Δφ = (lat2-lat1) * Math.PI/180;
+        const Δλ = (lon2-lon1) * Math.PI/180;
+
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        const d = R * c; // in metres
+
+        return d;
+    }
+
+
+    function conversionInSteps(dist,durationMs){ //for the input, the distance is in metres, the duration in milliseconds
+        durationMin = durationMs/60000;
+        distMiles = dist * 0.00062137;
+        userInverseSpeed = durationMin/distMiles;
+        console.log("userInverseSpeed : " + userInverseSpeed)
+        //then, we will get the index of the user's height in the chart in https://www.thecalculatorsite.com/articles/units/how-many-steps-in-a-mile.php
+        const userHeight= document.getElementById("height").value;
+        userHeightIndex = getHeightColumn(userHeight); //so now we know which line of stepsChart we will be using to calculate the steps
+        console.log("userHeightIndex : ",userHeightIndex);
+        const numSteps = getNumberSteps(userHeightIndex,userInverseSpeed,dist);
+        return numSteps;
+    }
+
+    //compares the user's height with the different heights that are in the chart. we do this to know which line in the chart will be useful.
+    function getHeightColumn(height){ 
+        if (height<heights[0]){
+            return 0;
+        }
+        else{
+            for (let i=1;i<heights.length;i++){
+                if (height<heights[i]){
+                    return i-1;
+                }
+            }
+            return heights.length-1;
+        }
+    }
+
+    //gives the indexes of the two speeds surrounding the user's speed
+    function getSpeedIndex(heightIndex,speed){ 
+        if (speed>inverseSpeed[0]){
+            return 0;
+        }
+        else{
+            for (let i=1;i<inverseSpeed.length;i++){
+                if (speed>inverseSpeed[i]){
+                    return i;
+                }
+            }
+            return inverseSpeed.lenght-1;
+        }
+    }
+
+    //returns the total number of steps given the height and the speed. This uses the data of the chart in https://www.thecalculatorsite.com/articles/units/how-many-steps-in-a-mile.php
+    function getNumberSteps(heightIndex,speed,dist){
+        speedIndex = getSpeedIndex(heightIndex,speed);
+        console.log("speedIndex : ",speedIndex);
+        const coefSup = (speed-inverseSpeed[speedIndex])/2;
+        console.log("coefSup : ",coefSup);
+        const numStepsForOneMile = coefSup * stepsChart[heightIndex][speedIndex-1] + (1-coefSup) * stepsChart[heightIndex][speedIndex];
+        console.log("numStepsForOneMile : ",numStepsForOneMile);
+        const numSteps = numStepsForOneMile * dist;
+        return Math.round(numSteps);
+    }
+
+    //returns the map associated to the running session, using Leaflet https://leafletjs.com/SlavaUkraini/
+    function getMap(){
+        document.getElementById("map").style.display="block"; //display the mile
+        // creates map options
+        var mapOptions = {
+            center: [0,0],
+            zoom: 10
+        }
+
+        // creates a map object
+        var map = new L.map('map', mapOptions);
+
+        // creates a Layer object
+        var layer = new L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+
+        // Adding layer to the map
+        map.addLayer(layer);
+
+        //adds the markers to visualise where the jogger ran
+        const numOfMarkers = latitudes.length;
+        const markersArray = []; //will contain all the markers of all the recorded positions
+        const coordinatesMarkers = []; //will contain the coordinates of all the markers
+        for (let i=0;i<numOfMarkers;i++){             
+            if (i==0){ //for the first point, we will mark it in the map and add a popup saying "Beginning"
+                var marker = L.marker([latitudes[i],longitudes[i]]).addTo(map);            
+                marker.bindPopup("<b>Beginning").openPopup();
+            }//for the last point, we will mark it in the map and add a popup 
+            else if (i==numOfMarkers-1){
+                var marker = L.marker([latitudes[i],longitudes[i]]).addTo(map);
+                marker.bindPopup("<b>End after"+Math.floor(i*interval/60000) + "minutes.");
+            }
+            else if (Math.floor(i*interval%60000)==0){ //adds a marker every minute
+                var marker = L.marker([latitudes[i],longitudes[i]]).addTo(map);
+                marker.bindPopup("After "+ Math.floor(i*interval/60000) + "minutes.");
+                
+            }
+            console.log(latitudes[i]);
+            console.log(longitudes[i]);
+            var marker = L.marker([latitudes[i],longitudes[i]]);
+            markersArray[markersArray.length]=marker;
+            coordinatesMarkers[coordinatesMarkers.length] = [latitudes[i],longitudes[i]]; 
+        }
+        
+        //adds a red line between all the points
+        var polyline = L.polyline(coordinatesMarkers, {color: 'red'}).addTo(map);
+       
+        //those two lines manage the bounds of the map in order to contain all the points
+        var group = new L.featureGroup(markersArray);
+        map.fitBounds(group.getBounds());
+      
+    }
+    
+
+    </script>
+</body>
+</html>

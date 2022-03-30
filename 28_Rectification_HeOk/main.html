@@ -186,6 +186,7 @@
         userHeightIndex = getHeightColumn(userHeight); //so now we know which line of stepsChart we will be using to calculate the steps
         console.log("userHeightIndex : ",userHeightIndex);
         
+        document.getElementById("delete").innerHTML="fist : " + dist;
         document.getElementById("delete").innerHTML="userInverseSpeed : " + userInverseSpeed;
         document.getElementById("delete").innerHTML+="userHeightIndex : "+userHeightIndex;
         const numSteps = getNumberSteps(userHeightIndex,userInverseSpeed,dist);

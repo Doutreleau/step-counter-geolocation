@@ -47,9 +47,8 @@
     const longitudes1 = [];
     var comp=0;
 
-      const latitudes = [50.6109262, 50.6109262,    50.6109262,    50.6109262,  50.6109262,    50.610916,   50.610916,   50.610916,   50.610916,   50.610916,   50.610916,   50.61096,  50.61096,  50.61096,  50.61096,  50.61096,  50.61096,  50.61096,  50.61096,  50.61096,  50.61096,  50.61096,  50.6110081,    50.6110081,    50.6110081];
-    const longitudes = [3.1339518, 3.1339518,   3.1339518  , 3.1339518,   3.1339518,    3.1339406,    3.1339406,    3.1339406,    3.1339406,    3.1339406,    3.1339406,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.1340572,    3.134181,    3.134181,    3.134181];
-  
+    const latitudes=[];
+    const longitudes=[];
 
     //we hide the elements we don't want to see for the moment
     document.getElementById("rectangleResult").style.display="none";
@@ -109,16 +108,18 @@
     //getting the position and showing the steps and timer
     function showPosition(position) {
         document.getElementById("rectangleTime").style.display="block";
-        latitudes[latitudes.length] = latitudes1[comp];
-        longitudes[longitudes.length] = longitudes1[comp];
+        latitudes[latitudes.length] = position.coords.latitude;
+        longitudes[longitudes.length] = position.coords.longitude;
         comp+=1;
         console.log("comp "+comp);
-        console.log("lat,lon",latitudes[latitudes.length-1]," ", longitudes[longitudes.length-1]);
+        console.log("lat,lon",latitudes[(latitudes.length)-1]," ", longitudes[longitudes.length-1]);
+        console.log("lat",latitudes[0]);
+        console.log("len", latitudes.length);
 
          //now we'll display the number of steps and the timer
         dist=Math.round(totalDistance());
         let end = new Date();
-        let durationInMilliseconds = end - beginning;
+        let durationInMilliseconds = end - beginning; 
         let durationHours = Math.floor(durationInMilliseconds/3600000)
         let durationMin = Math.floor((durationInMilliseconds-durationHours*3600000)/60000);
         let durationSec = Math.floor((durationInMilliseconds-durationMin*60000-durationHours*3600000)/1000);
@@ -131,7 +132,7 @@
     function stopGetLocation(){ 
         clearInterval(locationTimer);    
         let end = new Date(); //stores the date of the end of the session, useful when calculating the total duration of the session
-        let durationInMilliseconds = end - beginning;
+        let durationInMilliseconds = end - beginning; 
         let durationHours = Math.floor(durationInMilliseconds/3600000)
         let durationMin = Math.floor((durationInMilliseconds-durationHours*3600000)/60000);
         let durationSec = Math.floor((durationInMilliseconds-durationMin*60000-durationHours*3600000)/1000);
@@ -141,7 +142,7 @@
         distM=dist-(distKm*1000);
         avrSpeed=dist/(durationInMilliseconds/3600000);
         
-        console.log("Dist : "+distM);
+        console.log("Dist : "+dist);
         console.log("Sec : "+durationSec);
         
 
@@ -200,16 +201,27 @@
         speedIndex = getSpeedIndex(userSpeed);
         console.log("speedIndex : ",speedIndex);
         
-        const numStepsForOneMile = stepsChart[userHeightIndex][speedIndex];//contains the number of steps per meter given the height and the speed
-        //const coefSup = (userSpeed-speeds[speedIndex])/2;
-        //console.log("coefSup : ",coefSup);
-        //const numStepsForOneMile = coefSup * stepsChart[userHeightIndex][speedIndex-1] + (1-coefSup) * stepsChart[userHeightIndex][speedIndex];
-        //console.log("stepsChart[userHeightIndex][speedIndex] : ",[userHeightIndex][speedIndex]);
-        console.log("numStepsForOneMile : ",numStepsForOneMile);
         
-        const numSteps = numStepsForOneMile * dist;
-        console.log("num steps", numSteps);
-        return Math.round(numSteps);
+        if (speedIndex==0){
+            const numStepsForOneMile = stepsChart[userHeightIndex][speedIndex];//contains the number of steps per meter given the height and the speed
+            
+            console.log("numStepsForOneMile : ",numStepsForOneMile);
+        
+            const numSteps = numStepsForOneMile * dist;
+            console.log("num steps", numSteps);
+            return Math.round(numSteps);
+        }
+        else{
+            const coefSup = (userSpeed-speeds[speedIndex])/2;
+            console.log("coefSup : ",coefSup);
+            const numStepsForOneMile = coefSup * stepsChart[userHeightIndex][speedIndex-1] + (1-coefSup) * stepsChart[userHeightIndex][speedIndex];
+            console.log("stepChart[userHeightIndex][speedIndex] : ",[userHeightIndex][speedIndex]);
+            
+            console.log("numStepsForOneMile : ",numStepsForOneMile);        
+            const numSteps = numStepsForOneMile * dist;
+            console.log("num steps", numSteps);
+            return Math.round(numSteps);
+        }
     }
 
     //compares the user's height with the different heights that are in the chart. we do this to know which line in the chart will be useful.

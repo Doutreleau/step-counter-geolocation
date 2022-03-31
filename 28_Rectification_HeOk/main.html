@@ -80,7 +80,14 @@
     //we define constants to store HTML elements
     const result = document.getElementById("result"); //will display the information to the user
     const stepsDisplay = document.getElementById("steps"); // is the big circle with the number of steps
-    const timeDisplay = document.getElementById("time"); // this is the chrono
+    const timeDisplay = document.getElementById("time"); // this is the chrono    
+    
+    var options = {enableHighAccuracy: true}; //this is used to have more accurate positions
+    
+    //function called when the geolocation API fails
+    function error(err) {
+      console.warn(`ERROR(${err.code}): ${err.message}`);
+    }
     
     const interval = 2000; //the coordinates will be taken every 2 seconds
     locationTimer=null; //will contain the timer which will fetch the coordinates every 2 seconds
@@ -99,7 +106,7 @@
         }
         else{ //check if geolocation is supported
           if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(showPosition);
+            navigator.geolocation.getCurrentPosition(showPosition,error,options);
           } else { 
             result.innerHTML = "Geolocation is not supported by this browser.";
           }

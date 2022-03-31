@@ -52,7 +52,6 @@
 
     //we hide the elements we don't want to see for the moment
     document.getElementById("rectangleResult").style.display="none";
-    document.getElementById("map").style.display="none";
     document.getElementById("rectangleTime").style.display="none";
 
     // the next arrays will be used to convert the distance covered into the number of steps, according to the chart in https://www.thecalculatorsite.com/articles/units/how-many-steps-in-a-mile.php
@@ -200,11 +199,16 @@
         speedIndex = getSpeedIndex(userSpeed);
         console.log("speedIndex : ",speedIndex);
         
-        const numStepsForOneMile = stepsChart[userHeightIndex][speedIndex];//contains the number of steps per meter given the height and the speed
-        //const coefSup = (userSpeed-speeds[speedIndex])/2;
-        //console.log("coefSup : ",coefSup);
-        //const numStepsForOneMile = coefSup * stepsChart[userHeightIndex][speedIndex-1] + (1-coefSup) * stepsChart[userHeightIndex][speedIndex];
-        //console.log("stepsChart[userHeightIndex][speedIndex] : ",[userHeightIndex][speedIndex]);
+        
+        if (speedIndex==0){
+            const numStepsForOneMile = stepsChart[userHeightIndex][speedIndex];//contains the number of steps per meter given the height and the speed
+        }
+        else{
+            const coefSup = (userSpeed-speeds[speedIndex])/2;
+            console.log("coefSup : ",coefSup);
+            const numStepsForOneMile = coefSup * stepsChart[userHeightIndex][speedIndex-1] + (1-coefSup) * stepsChart[userHeightIndex][speedIndex];
+            console.log("stepsChart[userHeightIndex][speedIndex] : ",[userHeightIndex][speedIndex]);
+        }
         console.log("numStepsForOneMile : ",numStepsForOneMile);
         
         const numSteps = numStepsForOneMile * dist;
@@ -256,7 +260,6 @@
 
     //returns the map associated to the running session, using Leaflet https://leafletjs.com/SlavaUkraini/
     function getMap(){
-        document.getElementById("map").style.display="block"; //display the mile
         // creates map options
         var mapOptions = {
             center: [0,0],

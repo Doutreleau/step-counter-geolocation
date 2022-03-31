@@ -47,8 +47,9 @@
     const longitudes1 = [];
     var comp=0;
 
-    const latitudes=[];
-    const longitudes=[];
+    const latitudes = [];
+    const longitudes = [];
+
 
     //we hide the elements we don't want to see for the moment
     document.getElementById("rectangleResult").style.display="none";
@@ -119,7 +120,7 @@
          //now we'll display the number of steps and the timer
         dist=Math.round(totalDistance());
         let end = new Date();
-        let durationInMilliseconds = end - beginning; 
+        let durationInMilliseconds = end - beginning;
         let durationHours = Math.floor(durationInMilliseconds/3600000)
         let durationMin = Math.floor((durationInMilliseconds-durationHours*3600000)/60000);
         let durationSec = Math.floor((durationInMilliseconds-durationMin*60000-durationHours*3600000)/1000);
@@ -201,7 +202,15 @@
         speedIndex = getSpeedIndex(userSpeed);
         console.log("speedIndex : ",speedIndex);
         
-        
+        const numStepsForOneMile = stepsChart[userHeightIndex][speedIndex];//contains the number of steps per meter given the height and the speed
+            
+        console.log("numStepsForOneMile : ",numStepsForOneMile);
+
+        const numSteps = numStepsForOneMile * dist;
+        console.log("num steps", numSteps);
+        return Math.round(numSteps);
+
+        /*
         if (speedIndex==0){
             const numStepsForOneMile = stepsChart[userHeightIndex][speedIndex];//contains the number of steps per meter given the height and the speed
             
@@ -221,7 +230,7 @@
             const numSteps = numStepsForOneMile * dist;
             console.log("num steps", numSteps);
             return Math.round(numSteps);
-        }
+        }*/
     }
 
     //compares the user's height with the different heights that are in the chart. we do this to know which line in the chart will be useful.
@@ -239,7 +248,7 @@
         }
     }
 
-    //gives the indexes of the two speeds surrounding the user's speed
+    //gives the index of the speed in the speeds list that is inferior to the user's speed
     function getSpeedIndex(speed){ 
         console.log("e");
         console.log(speed);
@@ -249,9 +258,9 @@
             console.log("0");
             return 0;
         }
-        if (speed>speeds[speed.length]){
-            return speed.lenght-1;
+        if (speed>speeds[(speeds.length)-1]){
             console.log("n");
+            return ((speeds.length)-1);
         }
         else{
             for (let i=1;i<speeds.length;i++){
